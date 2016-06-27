@@ -26,9 +26,17 @@ func newVaultClient(addr, token string) (*vaultClient, error) {
 }
 
 func (v *vaultClient) getDatabaseCredentials(path string) (string, string, error) {
-	secret, err := v.client.Logical().Read(path)
-	if err != nil {
-		return "", "", err
+	var err error
+	var secret *api.Secret
+
+	for {
+		secret, err = v.client.Logical().Read(path)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		break
 	}
 	v.dbLeaseID = secret.LeaseID
 	v.dbLeaseDuration = secret.LeaseDuration
